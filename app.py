@@ -34,7 +34,7 @@ with t1:
   if not title.strip(): st.error('제목을 입력하세요.')
   else:
    try:
-    row={'user_id':user.id,'record_date':str(d),'record_time':str(tm),'category':cat,'title':title.strip(),'memo':memo,'location':loc,'content':content,'ai_photo_description':desc,'ai_summary':summary,'ai_keywords':[x.strip() for x in keys.split(',') if x.strip()],'tags':[x.strip().lstrip('#') for x in tags.split(',') if x.strip()]}
+    row={'user_id':user.id,'record_date':str(d),'record_time':str(tm),'category':cat,'title':title,'memo':memo,'location':loc,'content':content,'ai_photo_description':desc,'ai_summary':summary,'ai_keywords':[x.strip() for x in keys.split(',') if x.strip()],'tags':[x.strip().lstrip('#') for x in tags.split(',') if x.strip()]}
     rid=sb.table('records').insert(row).execute().data[0]['id']
     for i,p in enumerate(photos or []):
      ext=p.name.rsplit('.',1)[-1].lower() if '.' in p.name else 'bin'; path=f'{user.id}/{rid}/{uuid.uuid4().hex}.{ext}'
