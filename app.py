@@ -28,7 +28,7 @@ t1,t2=st.tabs(['새 기록','기록 검색'])
 with t1:
  with st.form('record',clear_on_submit=True):
   a,b,c=st.columns([1,1,2]); d=a.date_input('날짜',date.today()); tm=b.time_input('시간',datetime.now().time().replace(microsecond=0)); cat=c.selectbox('분류',['여행','주역·철학','강의','지역문화','생활','연구','가족','기타'])
-  title=st.text_input('제목 *', help='한글 입력 후 Enter 키를 한 번 눌러 글자를 확정해 주세요.'); loc=st.text_input('장소'); photos=st.file_uploader('사진',type=['jpg','jpeg','png','webp','heic'],accept_multiple_files=True); memo=st.text_area('메모'); content=st.text_area('내용',height=180)
+  ㅍ; loc=st.text_input('장소'); photos=st.file_uploader('사진',type=['jpg','jpeg','png','webp','heic'],accept_multiple_files=True); memo=st.text_area('메모'); content=st.text_area('내용',height=180)
   st.markdown('#### AI 영역'); desc=st.text_area('AI 사진설명'); summary=st.text_area('AI 요약'); keys=st.text_input('AI 핵심어',placeholder='제주, 정의향교, 유교문화'); tags=st.text_input('태그',placeholder='제주, 향교, 답사'); ok=st.form_submit_button('저장',type='primary',use_container_width=True)
  if ok:
   if not title.strip(): st.error('제목을 입력하세요.')
