@@ -22,6 +22,7 @@ with st.sidebar:
   st.success('로그인됨')
   if st.button('로그아웃'): sb.auth.sign_out(); st.session_state.session=None; st.rerun()
 if st.session_state.session is None: st.info('왼쪽에서 로그인하거나 회원가입하세요.'); st.stop()
+sb.auth.set_session(st.session_state.session.access_token, st.session_state.session.refresh_token)
 user=st.session_state.session.user
 t1,t2=st.tabs(['새 기록','기록 검색'])
 with t1:
