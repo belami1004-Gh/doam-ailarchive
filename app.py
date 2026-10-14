@@ -84,6 +84,7 @@ def analyze_record(title, category, location, memo, content, photos):
         "불확실한 지명, 인물, 연대는 단정하지 마세요."
     )
     description = (
+        "응답은 반드시 json 객체 형식으로 작성하세요.\n"
         f"제목: {title}\n분류: {category}\n장소: {location}\n"
         f"메모: {memo}\n본문: {content}"
     )
