@@ -213,6 +213,77 @@ with t2:
                 st.write("**AI 요약:**", r.get("ai_summary") or "-")
                 st.write("**핵심어:**", ", ".join(r.get("ai_keywords") or []))
                 st.write("**태그:**", " ".join("#" + x for x in (r.get("tags") or [])))
+                st.divider()
+                with st.form(f"edit_record_{r['id']}"):
+                    st.markdown("#### 기록 수정")
+                    ea, eb, ec = st.columns([1, 1, 2])
+                    edit_date = ea.date_input("날짜", value=date.fromisoformat(r["record_date"]), key=f"date_{r['id']}")
+                    original_time = str(r.get("record_time") or "12:00:00")[:8]
+                    edit_time = eb.time_input("시간", value=datetime.strptime(original_time, "%H:%M:%S").time(), key=f"time_{r['id']}")
+                    categories = ["여행", "주역·철학", "강의", "지역문화", "생활", "연구", "가족", "기타"]
+                    original_category = r.get("category") or "기타"
+                    if original_category not in categories:
+                        categories.append(original_category)
+                    edit_category = ec.selectbox("분류", categories, index=categories.index(original_category), key=f"cat_{r['id']}")
+                    edit_title = st.text_input("제목 *", value=r.get("title") or "", key=f"title_{r['id']}")
+                    edit_location = st.text_input("장소", value=r.get("location") or "", key=f"loc_{r['id']}")
+                    edit_memo = st.text_area("메모", value=r.get("memo") or "", key=f"memo_{r['id']}")
+                    edit_content = st.text_area("내용", value=r.get("content") or "", key=f"content_{r['id']}")
+                    edit_description = st.text_area("AI 사진설명 수정", value=r.get("ai_photo_description") or "", key=f"desc_{r['id']}")
+                    edit_summary = st.text_area("AI 요약 수정", value=r.get("ai_summary") or "", key=f"summary_{r['id']}")
+                    edit_keywords = st.text_input("핵심어 (쉼표로 구분)", value=", ".join(r.get("ai_keywords") or []), key=f"keywords_{r['id']}")
+                    edit_tags = st.text_input("태그 (쉼표로 구분)", value=", ".join(r.get("tags") or []), key=f"tags_{r['id']}")
+                    update_clicked = st.form_submit_button("수정 내용 저장", type="primary")
+                if update_clicked:
+                    if not edit_title.strip():
+                        st.error("제목을 입력하세요.")
+                    else:
+                        try:
+                            changes = {
+                                "record_date": str(edit_date), "record_time": str(edit_time),
+                                "category": edit_category, "title": edit_title.strip(),
+                                "location": edit_location, "memo": edit_memo, "content": edit_content,
+                                "ai_photo_description": edit_description, "ai_summary": edit_summary,
+                                "ai_keywords": [v.strip() for v in edit_keywords.split(",") if v.strip()],
+                                "tags": [v.strip().lstrip("#") for v in edit_tags.split(",") if v.strip()],
+                            }
+                            result = sb.table("records").update(changes).eq("id", r["id"]).eq("user_id", user.id).execute()
+                            if not result.data:
+                                st.error("수정할 기록을 찾지 못했습니다. 로그인 권한을 확인하세요.")
+                            else:
+                                st.success("수정했습니다. 화면을 다시 불러옵니다.")
+                                st.rerun()
+                        except Exception as exc:
+                            st.error(f"수정 오류: {exc}")
+
+                with st.form(f"delete_record_{r['id']}"):
+                    st.markdown("#### 기록 삭제")
+                    st.caption("삭제하면 기록과 연결된 사진을 되돌리기 어렵습니다. 삭제 전 내용을 확인하세요.")
+                    confirmed = st.checkbox("이 기록과 사진을 삭제하는 데 동의합니다.", key=f"confirm_{r['id']}")
+                    delete_clicked = st.form_submit_button("이 기록 삭제")
+                if delete_clicked:
+                    if not confirmed:
+                        st.warning("삭제 확인란을 먼저 선택하세요.")
+                    else:
+                        try:
+                            photo_rows = sb.table("record_photos").select("id,storage_path").eq("record_id", r["id"]).eq("user_id", user.id).execute().data
+                            # 자식 레코드를 먼저 삭제해 외래키 제약 조건을 지킵니다.
+                            sb.table("record_photos").delete().eq("record_id", r["id"]).eq("user_id", user.id).execute()
+                            deleted = sb.table("records").delete().eq("id", r["id"]).eq("user_id", user.id).execute()
+                            if not deleted.data:
+                                st.error("기록 삭제를 확인하지 못했습니다. 다시 확인하세요.")
+                            else:
+                                paths = [p["storage_path"] for p in photo_rows if p.get("storage_path")]
+                                if paths:
+                                    try:
+                                        sb.storage.from_("record-photos").remove(paths)
+                                    except Exception as cleanup_exc:
+                                        st.warning(f"기록은 삭제했지만 저장소의 사진 정리가 필요합니다: {cleanup_exc}")
+                                st.success("기록을 삭제했습니다.")
+                                st.rerun()
+                        except Exception as exc:
+                            st.error(f"삭제 오류: {exc}")
+
                 pictures = sb.table("record_photos").select("storage_path,original_filename").eq("record_id", r["id"]).order("sort_order").execute().data
                 for picture in pictures:
                     try:
